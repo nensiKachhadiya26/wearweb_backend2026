@@ -9,9 +9,19 @@ const DBConnection = require("./src/utils/DBConnection")
 DBConnection()
 
 const userRoutes = require("./src/routes/UserRoutes")
-app.use("/user",userRoutes)
+app.use("/userApi",userRoutes)
 
+const productRoutes = require("./src/routes/ProductRoutes")
+app.use("/productApi",productRoutes)
 
+const categoryRoutes = require("./src/routes/CategoryRoutes")
+app.use("/categoryApi",categoryRoutes)
+
+const subCategoryRoutes = require("./src/routes/SubCategoryRoutes")
+app.use("/subCategoryApi",subCategoryRoutes)
+
+const orderRoutes = require("./src/routes/OrderRoutes")
+app.use("/orderApi",orderRoutes)
 
 
 const PORT = process.env.PORT

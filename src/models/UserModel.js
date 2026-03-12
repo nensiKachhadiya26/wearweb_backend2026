@@ -32,6 +32,10 @@ const userSchema = new Schema({
         type:String,
         default:"active",
         enum:["active","inactive","deleted","blocked"]
+    },
+    created_at:{
+        type:Date,
+        default:Date.now
     }
 
 })
