@@ -23,6 +23,11 @@ app.use("/subCategoryApi",subCategoryRoutes)
 const orderRoutes = require("./src/routes/OrderRoutes")
 app.use("/orderApi",orderRoutes)
 
+const orderItemRoutes = require("./src/routes/OrderItemRoutes")
+app.use("/orderItemApi",orderItemRoutes)
+
+
+
 
 const PORT = process.env.PORT
 app.listen(PORT,()=>{
