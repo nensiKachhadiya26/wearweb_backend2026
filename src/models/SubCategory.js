@@ -13,6 +13,12 @@ const subCategorySchema = new mongoose.Schema({
         ref:"Category",
         required:true
     },
+    
+     status:{
+        type:String,
+        default:"active",
+        enum:["active","inactive"]
+    },
 
     created_at:{
         type:Date,

@@ -18,7 +18,7 @@ const createOrder = async(req,res)=>{
 const getAllOrder = async(req,res)=>{
     try{
         const allOrder = await orderSchema.find()
-        res.status(201).json({
+        res.status(200).json({
             message:"show all order data",
             data:allOrder
         })
@@ -33,7 +33,7 @@ const getAllOrder = async(req,res)=>{
 const getOrderById = async(req,res)=>{
     try{
         const foundOrder = await orderSchema.findById(req.params.id)
-        res.status(201).json({
+        res.status(200).json({
             message:"order found successfully",
             data:foundOrder
         })

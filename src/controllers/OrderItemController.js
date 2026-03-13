@@ -18,7 +18,9 @@ const createOrderItem = async(req,res)=>{
 const getAllOrderItem = async(req,res)=>{
     try{
         const allOrderItem = await orderItemSchema.find()
-        res.status(201).json({
+        .populate("order_id")
+        .populate("items.product_id")
+        res.status(200).json({
             message:"orderitem fetching successfully",
             data:allOrderItem
         })
@@ -33,7 +35,9 @@ const getAllOrderItem = async(req,res)=>{
 const getOrderItemById = async(req,res)=>{
     try{
         const foundOrderItem = await orderItemSchema.findById(req.params.id)
-        res.status(201).json({
+        .populate("order_id")
+        .populate("items.product_id")
+        res.status(200).json({
             message:"orderitem found successfully",
             data:foundOrderItem
         })

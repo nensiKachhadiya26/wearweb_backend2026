@@ -19,7 +19,7 @@ const createSubCategory = async(req,res)=>{
 const getAllSubCategory= async(req,res)=>{
     try{
         const allSubCategory = await subCategorySchema.find()
-        res.status(201).json({
+        res.status(200).json({
             message:"subcategory fetching successfully",
             data:allSubCategory
         })
@@ -34,7 +34,7 @@ const getAllSubCategory= async(req,res)=>{
 const getSubCategoryById = async(req,res)=>{
     try{
         const foundSubCategory = await subCategorySchema.findById(req.params.id)
-        res.status(201).json({
+        res.status(200).json({
             message:"found subcategory successfully",
             data:foundSubCategory
         })

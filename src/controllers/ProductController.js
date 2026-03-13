@@ -19,7 +19,10 @@ const createProduct = async(req,res) => {
 const getAllProduct = async(req,res)=>{
     try{
         const allProduct = await productSchema.find()
-        res.status(201).json({
+        .populate("categoryId")
+        .populate("subCategoryId")
+        .populate("sellerId")
+        res.status(200).json({
             message:"get all product data",
             data:allProduct
         })
@@ -34,7 +37,10 @@ const getAllProduct = async(req,res)=>{
 const getProductById = async(req,res)=>{
     try{
         const foundProduct = await productSchema.findById(req.params.id)
-        res.status(201).json({
+        .populate("categoryId")
+        .populate("subCategoryId")
+        .populate("sellerId")
+        res.status(200).json({
             message:"product found",
             data:foundProduct
         })

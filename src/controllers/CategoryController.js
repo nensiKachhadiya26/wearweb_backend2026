@@ -18,7 +18,7 @@ const createCategory = async(req,res)=>{
 const getAllCategory = async(req,res) => {
     try{
         const allCategory = await categorySchema.find()
-        res.status(201).json({
+        res.status(200).json({
             message:"show all category",
             data:allCategory
         })
@@ -33,7 +33,7 @@ const getAllCategory = async(req,res) => {
 const getCategoryById = async(req,res) =>{
     try{
         const foundCategory = await categorySchema.findById(req.params.id)
-        res.status(201).json({
+        res.status(200).json({
             message:"category found successfully",
             data:foundCategory
         })

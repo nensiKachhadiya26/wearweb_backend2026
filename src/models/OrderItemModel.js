@@ -8,21 +8,25 @@ const orderItemSchema = new mongoose.Schema({
         required:true
     },
 
-    product_id:{
-        type:mongoose.Types.ObjectId,
-        ref:"products",
-        required:true
-    },
+    items:[
+        {
+            product_id:{
+                type:mongoose.Types.ObjectId,
+                ref:"products",
+                required:true
+            },
 
-    quantity:{
-        type:Number,
-        required:true
-    },
+            quantity:{
+                type:Number,
+                required:true
+            },
 
-    price:{
-        type:Number,
-        required:true
+            price:{
+                type:Number,
+                required:true
+            }
     }
+]
 
 })
 

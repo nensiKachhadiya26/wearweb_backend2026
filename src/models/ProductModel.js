@@ -27,23 +27,43 @@ const productSchema = new mongoose.Schema({
     subCategoryId:{
         type:mongoose.Types.ObjectId,
         ref:"SubCategory",
-        required:true
+       // required:true
     },
 
     sellerId:{
         type:mongoose.Types.ObjectId,
         ref:"User",
-        required:true
+       // required:true
     },
 
-    image:{
-        type:String,
-        maxlength:255
-    },
+    image:[
+        {
+            type:String,
+            maxlength:255
+        }
+    ],
 
     stock:{
         type:Number,
         default:0
+    },
+
+    size:{
+        type:String,
+        default:"S",
+        enum:["S","M","L","XL","XXL"]
+    },
+
+    color:{
+        type:String,
+        default:"Black",
+        enum:["Red","Blue","Green","Yellow","Black"]
+    },
+
+    status:{
+        type:String,
+        default:"active",
+        enum:["active","inactive"]
     },
 
     created_at:{

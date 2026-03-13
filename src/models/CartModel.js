@@ -9,16 +9,18 @@ const cartSchema = new mongoose.Schema({
         
     },
 
-    product_id:{
-        type:mongoose.Types.ObjectId,
-        ref:"products",
-        required:true
-    },
+    items:[{
+            product_id:{
+                type:mongoose.Types.ObjectId,
+                ref:"products",
+                required:true
+            },
 
-    quantity:{
-        type:Number,
-        default:1
-    },
+            quantity:{
+                type:Number,
+                default:0
+            }
+        }],
 
     added_at:{
         type:Date,
