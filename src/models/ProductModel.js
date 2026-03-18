@@ -20,56 +20,55 @@ const productSchema = new mongoose.Schema({
 
     categoryId:{
         type:mongoose.Types.ObjectId,
-        ref:"Category",
+        ref:"categories",
         required:true
     },
 
     subCategoryId:{
         type:mongoose.Types.ObjectId,
-        ref:"SubCategory",
+        ref:"subcategories",
        // required:true
     },
 
     sellerId:{
         type:mongoose.Types.ObjectId,
-        ref:"User",
+        ref:"users",
        // required:true
     },
 
     image:[
         {
             type:String,
-            maxlength:255
         }
     ],
 
-    stock:{
-        type:Number,
-        default:0
-    },
+    // stock:{
+    //     type:Number,
+    //     default:0
+    // },
 
-    size:{
-        type:String,
-        default:"S",
-        enum:["S","M","L","XL","XXL"]
-    },
+    // size:{
+    //     type:String,
+    //     default:"S",
+    //     enum:["S","M","L","XL","XXL"]
+    // },
 
-    color:{
-        type:String,
-        default:"Black",
-        enum:["Red","Blue","Green","Yellow","Black"]
-    },
+    // color:{
+    //     type:String,
+    //     default:"Black",
+    //     enum:["Red","Blue","Green","Yellow","Black"]
+    // },
 
-    status:{
-        type:String,
-        default:"active",
-        enum:["active","inactive"]
-    },
+    // status:{
+    //     type:String,
+    //     default:"active",
+    //     enum:["active","inactive"]
+    // },
 
-    created_at:{
-        type:Date,
-        default:Date.now
-    }
+    // created_at:{
+    //     type:Date,
+    //     default:Date.now
+    // }
 
 })
 

@@ -1,9 +1,16 @@
 const productSchema = require("../models/ProductModel")
+const uploadToCloudinary = require("../utils/CloudinaryUtil")
 
 
 const createProduct = async(req,res) => {
     try{
-        const savedProduct = await productSchema.create(req.body)
+       console.log("req.files:", req.files);
+       console.log("req.body:", req.body);
+       // const savedProduct = await productSchema.create(req.body)
+       const file = req.files[0]; 
+       const cloudinaryResponse = await uploadToCloudinary(file.path)
+       console.log("cloudinaryResponse",cloudinaryResponse)
+       const savedProduct = await productSchema.create({...req.body,image:cloudinaryResponse.secure_url})
         res.status(201).json({
             message:"product create successfully..",
             data:savedProduct
@@ -19,7 +26,7 @@ const createProduct = async(req,res) => {
 const getAllProduct = async(req,res)=>{
     try{
         const allProduct = await productSchema.find()
-        .populate("categoryId")
+        .populate("categoryId" , "name")
         .populate("subCategoryId")
         .populate("sellerId")
         res.status(200).json({
@@ -27,6 +34,7 @@ const getAllProduct = async(req,res)=>{
             data:allProduct
         })
     }catch(err){
+         console.log(err) 
         res.status(500).json({
             message:"error while get all product data..",
             err:err
