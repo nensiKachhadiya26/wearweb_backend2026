@@ -33,7 +33,7 @@ const productSchema = new mongoose.Schema({
     sellerId:{
         type:mongoose.Types.ObjectId,
         ref:"users",
-       // required:true
+        required:true
     },
 
     image:[

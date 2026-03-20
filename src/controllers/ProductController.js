@@ -2,24 +2,39 @@ const productSchema = require("../models/ProductModel")
 const uploadToCloudinary = require("../utils/CloudinaryUtil")
 
 
-const createProduct = async(req,res) => {
-    try{
-       console.log("req.files:", req.files);
-       console.log("req.body:", req.body);
-       // const savedProduct = await productSchema.create(req.body)
-       const file = req.files[0]; 
-       const cloudinaryResponse = await uploadToCloudinary(file.path)
-       console.log("cloudinaryResponse",cloudinaryResponse)
-       const savedProduct = await productSchema.create({...req.body,image:cloudinaryResponse.secure_url})
+const createProduct = async(req, res) => {
+    try {
+        
+        if (!req.user) {
+            return res.status(401).json({ message: "Login required to create product" });
+        }
+
+        const file = req.file; 
+        if (!file) {
+            return res.status(400).json({ message: "Image is required" });
+        }
+
+       
+        const cloudinaryResponse = await uploadToCloudinary(file.path);
+        
+        
+        const savedProduct = await productSchema.create({
+            ...req.body,
+            sellerId: req.user._id, 
+            image: cloudinaryResponse.secure_url
+        });
+
         res.status(201).json({
-            message:"product create successfully..",
-            data:savedProduct
-        })
-    }catch(err){
+            message: "product create successfully..",
+            data: savedProduct
+        });
+
+    } catch(err) {
+        console.log("Error details:", err);
         res.status(500).json({
-            message:"error while creating product",
-            err:err
-        })
+            message: "error while creating product",
+            err: err.message 
+        });
     }
 }
 
@@ -89,10 +104,31 @@ const deleteProduct = async(req,res)=>{
         })
     }
 }
+const getMyProducts = async (req, res) => {
+    try {
+        // અહીં req.user._id ત્યારે જ મળશે જો validateToken મિડલવેર ચાલતું હોય
+        const myProducts = await productSchema.find({
+            sellerId: req.user._id 
+        })
+        .populate("categoryId", "name")
+        .populate("subCategoryId", "name");
+
+        res.status(200).json({
+            message: "product show successfully",
+            data: myProducts
+        });
+    } catch (err) {
+        res.status(500).json({
+            message: "error while fetching product",
+            error: err.message
+        });
+    }
+};
 module.exports = {
     createProduct,
     getAllProduct,
     getProductById,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    getMyProducts
 }

@@ -26,7 +26,8 @@ app.use("/orderApi",orderRoutes)
 const orderItemRoutes = require("./src/routes/OrderItemRoutes")
 app.use("/orderItemApi",orderItemRoutes)
 
-
+const cartRoutes = require("./src/routes/CartRoutes")
+app.use("/cartApi",cartRoutes)
 
 
 const PORT = process.env.PORT
