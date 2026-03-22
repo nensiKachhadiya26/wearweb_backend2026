@@ -29,6 +29,8 @@ app.use("/orderItemApi",orderItemRoutes)
 const cartRoutes = require("./src/routes/CartRoutes")
 app.use("/cartApi",cartRoutes)
 
+const paymentRoutes = require("./src/routes/PaymentRoutes")
+app.use("/paymentApi",paymentRoutes)
 
 const PORT = process.env.PORT
 app.listen(PORT,()=>{

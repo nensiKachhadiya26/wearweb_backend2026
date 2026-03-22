@@ -3,8 +3,9 @@ const orderController = require("../controllers/OrderController")
 const validateToken = require("../middleware/AuthMiddleware")
 
 router.post("/order",validateToken,orderController.createOrder)
-router.get("/orders",orderController.getAllOrder)
-router.get("/order/:id",orderController.getOrderById)
-router.put("/order/:id",orderController.updateOrder)
-router.delete("/order/:id",orderController.deleteOrder)
+router.get("/orders",validateToken,orderController.getAllOrder)
+router.get("/order",validateToken,orderController.getMyOrder)
+router.put("/order/:id",validateToken,orderController.cancelOrder)
+router.get("/order/:id", validateToken, orderController.getOrderById);
+router.delete("/order/:id", validateToken, orderController.deleteOrder);router.put("/order/status/:id", validateToken, orderController.updateOrderStatus);
 module.exports = router

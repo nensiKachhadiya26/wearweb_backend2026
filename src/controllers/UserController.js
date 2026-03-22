@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt")
 const mailSend = require("../utils/MailUtils")
 const jwt = require("jsonwebtoken")
 const secret = "secret"
+const productSchema = require("../models/ProductModel")
+const orderSchema = require("../models/OrderModel")
 
 //registrations...
 const registerUser = async(req,res)=>{
@@ -32,7 +34,7 @@ const registerUser = async(req,res)=>{
     
 const getAllUser = async(req,res)=>{
     try{
-        const allUser = await userSchema.find()
+        const allUser = await userSchema.find({role: 'user'})
         res.status(200).json({
                 message:"all user data ",
                 data:allUser
@@ -109,10 +111,56 @@ const loginUser = async(req,res)=>{
     }
 }
 
+const getDashboardStatus = async (req, res) => {
+  try {
+    // 1. Counts melvo (Tame upar je variable name require karya che te j vapro)
+    const totalUsers = await userSchema.countDocuments({role:"user"});
+    const totalProducts = await productSchema.countDocuments();
+    const totalOrders = await orderSchema.countDocuments();
+
+    // 2. Revenue calculate karo
+    // Tamari OrderModel ma field nu naam 'order_status' che ane enum ma 'Delivered' che.
+    // Amount mate field nu naam 'total_amount' che.
+    const orders = await orderSchema.find({ order_status: "Delivered" });
+    
+    const totalRevenue = orders.reduce((acc, curr) => {
+        return acc + (curr.total_amount || 0);
+    }, 0);
+
+    res.status(200).json({
+      success: true,
+      stats: {
+        totalUsers,
+        totalProducts,
+        totalOrders,
+        totalRevenue
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: "Dashboard data fetch karvama bhul thai",
+      error: error.message 
+    });
+  }
+};
+
+const getAllSellers = async (req, res) => {
+    try {
+       
+        const allSellers = await userSchema.find({ role: "seller" });
+        res.status(200).json({ success: true, data: allSellers });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "error while fetching seller" });
+    }
+};
+
 module.exports = {
     registerUser,
     getAllUser,
     deleteUser,
     updateUser,
     loginUser,
+    getDashboardStatus,
+    getAllSellers
 }

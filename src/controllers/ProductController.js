@@ -2,6 +2,7 @@ const productSchema = require("../models/ProductModel")
 const uploadToCloudinary = require("../utils/CloudinaryUtil")
 
 
+
 const createProduct = async(req, res) => {
     try {
         
@@ -18,10 +19,11 @@ const createProduct = async(req, res) => {
         const cloudinaryResponse = await uploadToCloudinary(file.path);
         
         
-        const savedProduct = await productSchema.create({
+       const savedProduct = await productSchema.create({
             ...req.body,
             sellerId: req.user._id, 
-            image: cloudinaryResponse.secure_url
+            image: cloudinaryResponse.secure_url,
+            status: "pending" 
         });
 
         res.status(201).json({
@@ -40,12 +42,12 @@ const createProduct = async(req, res) => {
 
 const getAllProduct = async(req,res)=>{
     try{
-        const allProduct = await productSchema.find()
+        const allProduct = await productSchema.find({ status: "approved" })
         .populate("categoryId" , "name")
         .populate("subCategoryId")
         .populate("sellerId")
         res.status(200).json({
-            message:"get all product data",
+            message:"get all approve product data",
             data:allProduct
         })
     }catch(err){
@@ -75,18 +77,52 @@ const getProductById = async(req,res)=>{
     }
 }
 
-const updateProduct = async(req,res) => {
-    try{
-        const updateObj = await productSchema.findByIdAndUpdate(req.params.id,req.body,{new:true})
-        res.status(201).json({
-            message:"product updated",
-            data:updateObj
-        })
-    }catch(err){
+const updateProduct = async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const loggedInSellerId = req.user._id;
+
+        // 1. પ્રોડક્ટ શોધો
+        const product = await productSchema.findById(productId);
+
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
+        // 2. માલિકી ચેક કરો
+        if (product.sellerId.toString() !== loggedInSellerId.toString()) {
+            return res.status(403).json({
+                message: "Unauthorized: You can only update your own products"
+            });
+        }
+
+        // 3. અપડેટ કરવા માટેનો ડેટા તૈયાર કરો
+        let updateData = { ...req.body };
+
+        // 4. જો નવી ઈમેજ અપલોડ કરી હોય, તો તેને Cloudinary પર મોકલો
+        if (req.file) {
+            const cloudinaryResponse = await uploadToCloudinary(req.file.path);
+            updateData.image = cloudinaryResponse.secure_url; // Cloudinary URL સેવ કરો
+        }
+
+        // 5. ડેટાબેઝ અપડેટ કરો
+        const updateObj = await productSchema.findByIdAndUpdate(
+            productId, 
+            updateData, 
+            { new: true }
+        );
+
+        res.status(200).json({
+            message: "product updated successfully",
+            data: updateObj
+        });
+
+    } catch (err) {
+        console.error("Update error:", err);
         res.status(500).json({
-            message:"error while update product..",
-            err:err
-        })
+            message: "error while update product..",
+            err: err.message
+        });
     }
 }
 
@@ -106,7 +142,6 @@ const deleteProduct = async(req,res)=>{
 }
 const getMyProducts = async (req, res) => {
     try {
-        // અહીં req.user._id ત્યારે જ મળશે જો validateToken મિડલવેર ચાલતું હોય
         const myProducts = await productSchema.find({
             sellerId: req.user._id 
         })
@@ -124,11 +159,26 @@ const getMyProducts = async (req, res) => {
         });
     }
 };
+const getPendingProducts = async (req, res) => {
+    const products = await productSchema.find({ status: 'pending' }).populate('sellerId', 'firstName lastName email');
+    console.log("Pending Products with Seller:", JSON.stringify(products, null, 2));
+    res.json({ success: true, data: products });
+};
+
+// 2. પ્રોડક્ટનું સ્ટેટસ બદલવા માટે (Approve/Reject)
+const updateProductStatus = async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body; // status: 'approved' અથવા 'rejected'
+    await productSchema.findByIdAndUpdate(id, { status });
+    res.json({ success: true, message: `Product ${status} successfully!` });
+};
 module.exports = {
     createProduct,
     getAllProduct,
     getProductById,
     updateProduct,
     deleteProduct,
-    getMyProducts
+    getMyProducts,
+    getPendingProducts,
+    updateProductStatus
 }

@@ -10,7 +10,7 @@ const paymentSchema = new mongoose.Schema({
 
     payment_method:{
         type: String,
-        enum:["COD","Online"],
+        enum:["COD","UPI"],
         required: true
     },
 

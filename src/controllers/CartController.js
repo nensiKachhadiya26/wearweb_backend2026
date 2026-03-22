@@ -13,11 +13,10 @@ const createCart = async (req, res) => {
 
         if (cart) {
             // ૨. જો કાર્ટ હોય, તો ચેક કરો કે આ પ્રોડક્ટ અંદર છે?
-            const itemIndex = cart.items.findIndex(item => item.product_id.toString() === product_id);
-
-            if (itemIndex > -1) {
-                // જો પ્રોડક્ટ હોય, તો ફક્ત ક્વોન્ટિટી વધારો
-                cart.items[itemIndex].quantity += Number(quantity) || 1;
+                const itemIndex = cart.items.findIndex(item => 
+                String(item.product_id).trim() === String(product_id).trim() ); 
+           if (itemIndex > -1) {
+                cart.items[itemIndex].quantity = Number(quantity) || 1; 
             } else {
                 // જો પ્રોડક્ટ ના હોય, તો નવી એડ કરો
                 cart.items.push({ product_id, quantity: quantity || 1 });
@@ -126,10 +125,22 @@ const deleteCart = async (req, res) => {
     }
 };
 
+const clearCartAfterOrder = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        // આ યુઝરનું આખું કાર્ટ ડોક્યુમેન્ટ જ ડીલીટ કરી નાખશે
+        await cartSchema.findOneAndDelete({ user_id: userId });
+        
+        res.status(200).json({ message: "Cart cleared successfully" });
+    } catch (err) {
+        res.status(500).json({ message: "Error clearing cart", err: err.message });
+    }
+};
 module.exports = {
     createCart,
     getAllCart,
     getCartById,
     updateCart,
-    deleteCart
+    deleteCart,
+    clearCartAfterOrder
 }

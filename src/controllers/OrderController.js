@@ -1,113 +1,165 @@
 const orderSchema = require("../models/OrderModel")
 const orderItemSchema = require("../models/OrderItemModel")
-const cartSchema = require("../models/CartModel");
+const cartSchema = require("../models/CartModel")
 
 const createOrder = async (req, res) => {
     try {
-        const userId = req.user._id;
-        console.log("User ID from Token:", userId); 
+        const userId = req.user._id; 
+        // ૧. ફ્રન્ટએન્ડથી આવતા નામો બરાબર અહીં લખો
+        const { total_amount, cartItems, shippingAddress,fullName } = req.body; 
 
-        const cart = await cartSchema.findOne({ user_id: userId }).populate("items.product_id");
-        console.log("Cart Found:", cart); 
-
-        if (!cart || !cart.items || cart.items.length === 0) {
-            console.log("Cart is empty or not found!"); 
-            return res.status(400).json({ message: "Your Cart Is Empty!" });
-        }
-
-        const newOrder = await orderSchema.create({
+        const newOrder = new orderSchema({
             user_id: userId,
-            total_amount: req.body.total_amount, 
-            
+            total_amount: total_amount, // ખાતરી કરો કે અહીં 'total_amount' જ છે
+            shippingAddress: shippingAddress, 
+            customer_name: fullName,
             order_status: "Pending"
         });
 
-        await orderItemSchema.create({
-            order_id: newOrder._id,
-            items: cart.items.map(item => ({
-                product_id: item.product_id?._id,
+        const savedOrder = await newOrder.save();
+
+        const newOrderItems = new orderItemSchema({
+            order_id: savedOrder._id,
+            items: cartItems.map(item => ({
+                product_id: item.productId || item.product_id,
                 quantity: item.quantity,
-                price: item.product_id.price || 0
-                
+                price: item.price
             }))
         });
 
-        await cartSchema.findOneAndDelete({ user_id: userId });
+        await newOrderItems.save();
+        await cartSchema.findOneAndDelete({ user_id: userId }); 
 
         res.status(201).json({ 
             message: "Order placed successfully! 🎉", 
-            orderId: newOrder._id 
+            data: savedOrder, // ફ્રન્ટએન્ડ આ 'data' કી શોધે છે
+            orderItems: newOrderItems
         });
 
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server Error", error: err.message });
+    } catch (error) {
+        res.status(500).json({ message: "Order failed", error: error.message });
     }
 };
 
+// સેલર ડેશબોર્ડ માટેના ઓર્ડર મેળવવા
 const getAllOrder = async(req,res)=>{
     try{
-        const allOrder = await orderSchema.find()
+        // જો તમારે બધા જ ઓર્ડર જોવા હોય તો find() ઠીક છે
+        const allOrder = await orderSchema.find().sort({ createdAt: -1 });
         res.status(200).json({
-            message:"show all order data",
-            data:allOrder
-        })
-    }catch(err){
-        res.status(500).json({
-            message:"error while fetching order..",
-            err:err
-        })
+            message: "success",
+            data: allOrder // ખાતરી કરો કે અહીં 'data' કી જ છે
+        });
+    } catch(err){
+        res.status(500).json({ message: "Error", err: err.message });
     }
 }
 
-const getOrderById = async(req,res)=>{
-    try{
-        const foundOrder = await orderSchema.findById(req.params.id)
+const getMyOrder = async (req, res) => {
+    try {
+        const userId = req.user._id; 
+        
+        // ભૂલ સુધારો: 'userId' ને બદલે 'user_id' વાપરો (જે મોડેલમાં છે)
+        const orders = await orderSchema.find({ user_id: userId }).sort({ createdAt: -1 });
+        
         res.status(200).json({
-            message:"order found successfully",
-            data:foundOrder
-        })
-    }catch(err){
-        res.status(500).json({
-            message:"error while fetching order..",
-            err:err
-        })
+            data: orders 
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-}
+};
 
-const updateOrder = async(req,res)=>{
-    try{
-        const updateObj = await orderSchema.findByIdAndUpdate(req.params.id,req.body,{new:true})
-        res.status(201).json({
-            message:"order update successfully",
-            data:updateObj
-        })
-    }catch(err){
-        res.status(500).json({
-            message:"error while updating order..",
-            err:err
-        })
-    }
-}
+// ... બાકીના ફંક્શન્સ (cancelOrder, deleteOrder) માં પણ 'user_id' વાપરવું
+const cancelOrder = async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        // અહીં પણ user_id કરો
+        const order = await orderSchema.findOne({ _id: orderId, user_id: req.user._id });
 
-const deleteOrder = async(req,res)=>{
-    try{
-        const deleteObj = await orderSchema.findByIdAndDelete(req.params.id)
-        res.status(201).json({
-            message:"order delete successfully",
-            data:deleteObj
-        })
-    }catch(err){
-        res.status(500).json({
-            message:"error while deleting order..",
-            err:err
-        })
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+        order.order_status = "Cancelled";
+        await order.save();
+        res.status(200).json({ message: "Order cancelled", data: order });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-}
+};
+const deleteOrder = async (req, res) => {
+    try {
+        const deleteObj = await orderSchema.findByIdAndDelete(req.params.id);
+        if (!deleteObj) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+        res.status(200).json({
+            message: "order delete successfully",
+            data: deleteObj
+        });
+    } catch (err) {
+        res.status(500).json({
+            message: "error while deleting order..",
+            err: err.message
+        });
+    }
+};
+const getOrderById = async (req, res) => {
+    try {
+        // ૧. ઓર્ડર શોધો અને યુઝરની વિગતો મેળવો
+        // ચેક કરો: તમારા સ્કીમામાં 'user' છે કે 'user_id'? જે હોય તે અહીં લખો.
+        const order = await orderSchema.findById(req.params.id).populate("user_id", "firstName lastName email");
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: "Order not found"
+            });
+        }
+
+        // ૨. ઓર્ડર આઈટમ્સ શોધો અને પ્રોડક્ટની વિગતો populate કરો
+        // ખાતરી કરો કે orderItemSchema માં 'product_id' ref આપેલી છે.
+        const orderItems = await orderItemSchema.findOne({ order_id: order._id })
+            .populate({
+                path: 'items.product_id',
+                select: 'name price image' // પ્રોડક્ટમાંથી આટલી જ વિગતો લેવી
+            });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                order,
+                // ફ્રન્ટએન્ડમાં 'items' તરીકે મોકલીએ છીએ
+                items: orderItems ? orderItems.items : []
+            }
+        });
+    } catch (error) {
+        console.error("Error in getOrderById:", error); // સર્વર ટર્મિનલમાં ભૂલ જોવા માટે
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+const updateOrderStatus = async (req, res) => {
+    try {
+        const { order_status } = req.body;
+        const updatedOrder = await orderSchema.findByIdAndUpdate(
+            req.params.id, 
+            { order_status }, 
+            { new: true }
+        );
+        res.status(200).json({ success: true, data: updatedOrder });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
 module.exports = {
     createOrder,
     getAllOrder,
+    getMyOrder,
+    cancelOrder,
+    deleteOrder,
     getOrderById,
-    updateOrder,
-    deleteOrder
+    updateOrderStatus
 }

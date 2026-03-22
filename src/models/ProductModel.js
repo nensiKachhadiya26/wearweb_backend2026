@@ -59,11 +59,11 @@ const productSchema = new mongoose.Schema({
     //     enum:["Red","Blue","Green","Yellow","Black"]
     // },
 
-    // status:{
-    //     type:String,
-    //     default:"active",
-    //     enum:["active","inactive"]
-    // },
+   status: { 
+        type: String, 
+        enum: ['pending', 'approved', 'rejected'], 
+        default: 'pending' 
+    }
 
     // created_at:{
     //     type:Date,
