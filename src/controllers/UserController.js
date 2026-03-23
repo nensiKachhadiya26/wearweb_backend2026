@@ -155,6 +155,33 @@ const getAllSellers = async (req, res) => {
     }
 };
 
+const forgotPassword = async(req,res)=>{
+    console.log(req.body);
+    const {email} = req.body;
+    if(!email) return res.status(404).json({
+        message:"email not provided.."
+    })
+    const foundUserFromEmail = await userSchema.findOne({email:email})
+    if(foundUserFromEmail){
+        const token = jwt.sign(foundUserFromEmail.toObject(),secret,{expiresIn:60*24*7})
+        const url = `https://localhost:5173/ResetPassword/${token}`
+         const mailtext = `<html>
+            <a href ='${url}'>RESET PASSWORD</a>
+        </html>`
+        await mailSend(foundUserFromEmail.email,"Reset Password Link",mailtext)
+        res.status(200).json({
+            message:'reset password link sent to your email'
+        })
+     }
+    else{
+        res.status(404).json({
+            message:"user not found.."
+        })
+    
+
+    }
+}
+
 module.exports = {
     registerUser,
     getAllUser,
@@ -162,5 +189,6 @@ module.exports = {
     updateUser,
     loginUser,
     getDashboardStatus,
-    getAllSellers
+    getAllSellers,
+    forgotPassword
 }
