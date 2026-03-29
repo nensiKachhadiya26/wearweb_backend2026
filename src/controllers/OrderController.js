@@ -42,15 +42,34 @@ const createOrder = async (req, res) => {
 };
 
 // સેલર ડેશબોર્ડ માટેના ઓર્ડર મેળવવા
-const getAllOrder = async(req,res)=>{
-    try{
-        // જો તમારે બધા જ ઓર્ડર જોવા હોય તો find() ઠીક છે
-        const allOrder = await orderSchema.find().sort({ createdAt: -1 });
+const getAllOrder = async (req, res) => {
+    try {
+        const loggedInSellerId = req.user._id; // લૉગિન થયેલ સેલરની ID
+
+        // ૧. પેલા 'OrderItem' ટેબલમાંથી એવા ઓર્ડર આઈડી (order_id) શોધો 
+        // જેમાં પ્રોડક્ટનો sellerId લૉગિન થયેલ સેલર સાથે મેચ થતો હોય.
+        const relevantOrderItems = await orderItemSchema.find().populate({
+            path: 'items.product_id',
+            match: { sellerId: loggedInSellerId }, // ફક્ત આ સેલરની પ્રોડક્ટ્સ જ ફિલ્ટર કરો
+            select: 'sellerId'
+        });
+
+        // ૨. જે ઓર્ડરમાં આ સેલરની એક પણ પ્રોડક્ટ મળી હોય, તેના ID એક એરેમાં ભેગા કરો
+        const sellerOrderIds = relevantOrderItems
+            .filter(orderItem => orderItem.items.some(item => item.product_id !== null))
+            .map(orderItem => orderItem.order_id);
+
+        // ૩. હવે ફક્ત એ જ ઓર્ડર 'orderSchema' માંથી લાવો જે આ લિસ્ટમાં હોય
+        const allOrder = await orderSchema.find({
+            _id: { $in: sellerOrderIds }
+        }).sort({ createdAt: -1 });
+
         res.status(200).json({
             message: "success",
-            data: allOrder // ખાતરી કરો કે અહીં 'data' કી જ છે
+            data: allOrder
         });
-    } catch(err){
+    } catch (err) {
+        console.error("Error in getAllOrder:", err);
         res.status(500).json({ message: "Error", err: err.message });
     }
 }
@@ -154,6 +173,54 @@ const updateOrderStatus = async (req, res) => {
         res.status(500).json({ success: false, error: err.message });
     }
 };
+
+const getRecentPendingOrders = async (req, res) => {
+    try {
+        const sellerId = req.user._id;
+
+        // ૧. પેલા એવા ઓર્ડર શોધો જેનું સ્ટેટસ "Pending" હોય
+        const pendingOrders = await orderSchema.find({ 
+            order_status: "Pending" 
+        }).select("_id");
+
+        const pendingOrderIds = pendingOrders.map(o => o._id);
+
+        // ૨. હવે 'orderItemSchema' માં તપાસો કે આ Pending ઓર્ડરમાં આ સેલરની કઈ પ્રોડક્ટ છે
+        const pendingItems = await orderItemSchema.find({
+            order_id: { $in: pendingOrderIds }
+        }).populate({
+            path: 'items.product_id',
+            match: { sellerId: sellerId }, // ફક્ત આ સેલરની પ્રોડક્ટ
+            select: 'name'
+        }).populate('order_id');
+
+        // ૩. ડેટાને ફોર્મેટ કરો (બીજા સેલરની પ્રોડક્ટ ફિલ્ટર કરીને)
+        const result = [];
+        pendingItems.forEach(group => {
+            group.items.forEach(item => {
+                if (item.product_id) { // જો મેચ થાય તો જ
+                    result.push({
+                        order_id: group.order_id._id,
+                        price: item.price,
+                        product_name: item.product_id.name,
+                        quantity: item.quantity,
+                        status: group.order_id.order_status,
+                        createdAt: group.order_id.createdAt
+                    });
+                }
+            });
+        });
+
+        // છેલ્લા ઓર્ડર પહેલા બતાવવા માટે શોર્ટિંગ
+        const finalData = result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+
+        res.status(200).json({ success: true, data: finalData });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+
 module.exports = {
     createOrder,
     getAllOrder,
@@ -161,5 +228,6 @@ module.exports = {
     cancelOrder,
     deleteOrder,
     getOrderById,
-    updateOrderStatus
+    updateOrderStatus,
+    getRecentPendingOrders
 }

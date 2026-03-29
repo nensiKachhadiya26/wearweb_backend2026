@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken")
 const secret = "secret"
 const productSchema = require("../models/ProductModel")
 const orderSchema = require("../models/OrderModel")
+const orderItemSchema = require("../models/OrderItemModel")
 
 //registrations...
 const registerUser = async(req,res)=>{
@@ -181,7 +182,71 @@ const forgotPassword = async(req,res)=>{
 
     }
 }
+const getAllSalesForAdmin = async (req, res) => {
+    try {
+        const allSales = await orderItemSchema.find()
+            .populate({
+                path: 'order_id',
+                model: 'orders',
+                select: 'order_status createdAt'
+            })
+            .populate({
+                path: 'items.product_id',
+                model: 'products',
+                select: 'name image sellerId price', 
+                populate: { 
+                    path: 'sellerId', 
+                    model: 'users', 
+                    // તમારા User Schema મુજબ આ ફિલ્ડ્સ હોવી જરૂરી છે
+                    select: 'firstName lastName' 
+                }
+            });
 
+        const formattedSales = allSales.flatMap(group => {
+            if (!group.order_id || !group.items) return [];
+
+            return group.items.map(item => {
+                const product = item.product_id;
+                const seller = product?.sellerId;
+
+                // સેલરનું નામ બનાવવાનું લોજિક
+                let fullName = "Unknown Seller";
+                if (seller) {
+                    // જો firstName અને lastName હોય તો તેને જોડો
+                    const fName = seller.firstName || "";
+                    const lName = seller.lastName || "";
+                    fullName = (fName || lName) ? `${fName} ${lName}`.trim() : "Name Not Set";
+                } else if (!product) {
+                    fullName = "Product Deleted";
+                }
+
+                // અમાઉન્ટ લોજિક
+                const unitPrice = Number(item.price || product?.price || 0);
+                const qty = Number(item.quantity) || 1;
+
+                return {
+                    order_id: group.order_id._id,
+                    date: group.order_id.createdAt,
+                    product_name: product?.name || "Product Deleted",
+                    product_image: (product?.image && Array.isArray(product.image)) ? product.image[0] : (product?.image || ""),
+                    seller_name: fullName,
+                    quantity: qty,
+                    amount: unitPrice * qty,
+                    status: group.order_id.order_status
+                };
+            });
+        });
+
+        res.status(200).json({ 
+            success: true, 
+            data: formattedSales 
+        });
+
+    } catch (err) {
+        console.error("Master Error:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
 module.exports = {
     registerUser,
     getAllUser,
@@ -190,5 +255,6 @@ module.exports = {
     loginUser,
     getDashboardStatus,
     getAllSellers,
-    forgotPassword
+    forgotPassword,
+    getAllSalesForAdmin
 }

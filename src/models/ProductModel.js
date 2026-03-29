@@ -47,11 +47,11 @@ const productSchema = new mongoose.Schema({
     //     default:0
     // },
 
-    // size:{
-    //     type:String,
-    //     default:"S",
-    //     enum:["S","M","L","XL","XXL"]
-    // },
+   sizes: [
+        {
+            type: String 
+        }
+    ],
 
     // color:{
     //     type:String,
@@ -70,6 +70,6 @@ const productSchema = new mongoose.Schema({
     //     default:Date.now
     // }
 
-})
+} ,{ timestamps: true })
 
 module.exports = mongoose.model("products",productSchema)
