@@ -9,5 +9,6 @@ router.post("/login",userController.loginUser)
 router.get("/admin/status", userController.getDashboardStatus);
 router.get("/getsellers", userController.getAllSellers);
 router.post("/forgotpassword",userController.forgotPassword)
+router.post("/resetpassword",userController.resetPassword)
 router.get("/view-sales", validateToken, userController.getAllSalesForAdmin);
 module.exports = router

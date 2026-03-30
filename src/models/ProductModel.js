@@ -63,7 +63,17 @@ const productSchema = new mongoose.Schema({
         type: String, 
         enum: ['pending', 'approved', 'rejected'], 
         default: 'pending' 
-    }
+    },
+    reviews: [
+        {
+            userId: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
+            userName: String,
+            rating: { type: Number, required: true },
+            comment: String,
+            createdAt: { type: Date, default: Date.now }
+        }
+    ],
+    averageRating: { type: Number, default: 0 }
 
     // created_at:{
     //     type:Date,

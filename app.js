@@ -32,6 +32,11 @@ app.use("/cartApi",cartRoutes)
 const paymentRoutes = require("./src/routes/PaymentRoutes")
 app.use("/paymentApi",paymentRoutes)
 
+const reviewRoutes = require("./src/routes/ReviewRoutes");
+app.use('/reviewApi', reviewRoutes);
+
+app.use('/uploads', express.static('uploads'));
+
 const PORT = process.env.PORT
 app.listen(PORT,()=>{
     console.log(`server started on port ${PORT}`)

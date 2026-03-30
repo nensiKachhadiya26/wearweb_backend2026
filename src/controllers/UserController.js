@@ -165,7 +165,7 @@ const forgotPassword = async(req,res)=>{
     const foundUserFromEmail = await userSchema.findOne({email:email})
     if(foundUserFromEmail){
         const token = jwt.sign(foundUserFromEmail.toObject(),secret,{expiresIn:60*24*7})
-        const url = `https://localhost:5173/ResetPassword/${token}`
+        const url = `http://localhost:5173/ResetPassword/${token}`
          const mailtext = `<html>
             <a href ='${url}'>RESET PASSWORD</a>
         </html>`
@@ -247,6 +247,31 @@ const getAllSalesForAdmin = async (req, res) => {
         res.status(500).json({ success: false, error: err.message });
     }
 };
+
+
+const resetPassword = async(req,res)=>{
+
+    const {newPassword,token} = req.body;
+    try{
+
+        const decodedUser = await jwt.verify(token,secret) //{userobject}
+        const hashedPassword =await  bcrypt.hash(newPassword,10)
+        const updatedUser = await userSchema.findByIdAndUpdate(decodedUser._id,{password:hashedPassword})
+        res.status(200).json({
+            message:"password reset successfully !!",
+        })
+
+
+    }catch(err){
+        console.log(err)
+        res.status(500).json({
+            message:"server error..",
+            err:err
+        })
+    }
+
+}
+
 module.exports = {
     registerUser,
     getAllUser,
@@ -256,5 +281,6 @@ module.exports = {
     getDashboardStatus,
     getAllSellers,
     forgotPassword,
-    getAllSalesForAdmin
+    getAllSalesForAdmin,
+    resetPassword
 }
