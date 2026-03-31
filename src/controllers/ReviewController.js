@@ -24,7 +24,7 @@ const getAllReviews = async (req, res) => {
     try {
         const reviews = await reviewSchema.find()
             .populate('userId', 'firstName lastName email') // યુઝરનું નામ અને ઈમેઈલ લેવા
-            .populate('productId', 'productName') // પ્રોડક્ટનું નામ લેવા
+            .populate('productId', 'name') // પ્રોડક્ટનું નામ લેવા
             .sort({ createdAt: -1 });
 
         res.status(200).json({ data: reviews });
