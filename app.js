@@ -14,6 +14,7 @@ app.use("/userApi",userRoutes)
 const productRoutes = require("./src/routes/ProductRoutes")
 app.use("/productApi",productRoutes)
 
+
 const categoryRoutes = require("./src/routes/CategoryRoutes")
 app.use("/categoryApi",categoryRoutes)
 
