@@ -1,96 +1,54 @@
-const paymentSchema = require("../models/PaymentModel")
-const mongoose = require("mongoose");
+const Razorpay = require("razorpay");
+const crypto = require("crypto");
+const paymentSchema = require("../models/PaymentModel");
 
-const createPayment = async (req, res) => {
+const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY,
+    key_secret: process.env.RAZORPAY_SECRET
+});
+
+// 1. Create Order
+exports.createRazorPayOrder = async (req, res) => {
     try {
-        console.log("Payment Data Received:", req.body); // આ ટર્મિનલમાં ચેક કરવા માટે છે
+        const options = {
+            amount: Number(req.body.amount) * 100, // INR to Paise
+            currency: "INR",
+            receipt: "order_rcptid_" + Date.now(),
+        };
 
-        const { order_id, payment_method, payment_status } = req.body;
-        if (!order_id || !payment_method) {
-            return res.status(400).json({ message: "Missing required fields" });
-        }
-        const savedPayment = await paymentSchema.create({
-            order_id:new mongoose.Types.ObjectId(order_id),
-            payment_method:payment_method,
-            payment_status: payment_status || "Success"
-        });
-
-        res.status(201).json({
-            message: "Payment data saved successfully",
-            data: savedPayment
-        });
+        const order = await razorpay.orders.create(options);
+        res.status(200).json({ success: true, order });
     } catch (err) {
-        console.error("Backend Payment Error:", err.message);
-        res.status(500).json({
-            message: "Internal Server Error in Payment",
-            error: err.message
-        });
+        res.status(500).json({ success: false, message: err.message });
     }
 };
 
-const getAllPayment = async(req,res)=>{
-    try{
-        const allPayment = await paymentSchema.find()
-        res.status(200).json({
-            message:"payment fetching successfully",
-            data:allPayment
-        })
-    }catch(err){
-        res.status(500).json({
-            message:"error while fetching payment..",
-            err:err
-        })
-    }
-}
+// 2. Verify Payment
+exports.verifyPayment = async (req, res) => {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount } = req.body;
 
-const getPaymentById = async(req,res)=>{
-    try{
-        const foundPayment = await paymentSchema.findById(req.params.id)
-        res.status(200).json({
-            message:"payment fetching successfully",
-            data:foundPayment
-        })
-    }catch(err){
-        res.status(500).json({
-            message:"error while fetching payment..",
-            err:err
-        })
-    }
-}
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto
+        .createHmac("sha256", process.env.RAZORPAY_SECRET)
+        .update(body.toString())
+        .digest("hex");
 
-const updatePayment = async(req,res)=>{
-    try{
-        const updateObj = await paymentSchema.findByIdAndUpdate(req.params.id,req.body,{new:true})
-        res.status(201).json({
-            message:"payment update successfully",
-            data:updateObj
-        })
-    }catch(err){
-        res.status(500).json({
-            message:"error while updating payment..",
-            err:err
-        })
-    }
-}
+    const isVerified = expectedSignature === razorpay_signature;
 
-const deletePayment = async(req,res)=>{
-    try{
-        const deleteObj = await paymentSchema.findByIdAndDelete(req.params.id)
-        res.status(201).json({
-            message:"payment deleting successfully",
-            data:deleteObj
-        })
-    }catch(err){
-        res.status(500).json({
-            message:"error while deleting payment..",
-            err:err
-        })
+    // Database Entry
+    await paymentSchema.create({
+        paymentId: "PAY-" + Date.now(),
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        razorpaySignature: razorpay_signature,
+        amount: amount,
+        currency: "INR",
+        status: isVerified ? "success" : "failed"
+    });
+
+    if (isVerified) {
+        res.status(200).json({ success: true, message: "Verified" });
+    } else {
+        res.status(400).json({ success: false, message: "Invalid Signature" });
     }
-}
-module.exports = {
-    createPayment,
-    getAllPayment,
-    getPaymentById,
-    updatePayment,
-    deletePayment
-}
+};

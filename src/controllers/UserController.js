@@ -272,6 +272,20 @@ const resetPassword = async(req,res)=>{
 
 }
 
+// લોગીન થયેલા યુઝરની પ્રોફાઇલ મેળવવા માટે
+const getUserProfile = async (req, res) => {
+    try {
+        // req.user.id તમારા AuthMiddleware માંથી આવશે
+        const user = await userSchema.findById(req.user._id).select("-password"); 
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
 module.exports = {
     registerUser,
     getAllUser,
@@ -282,5 +296,6 @@ module.exports = {
     getAllSellers,
     forgotPassword,
     getAllSalesForAdmin,
-    resetPassword
+    resetPassword,
+    getUserProfile
 }

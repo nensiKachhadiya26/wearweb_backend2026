@@ -5,12 +5,16 @@ const cartSchema = require("../models/CartModel")
 const createOrder = async (req, res) => {
     try {
         const userId = req.user._id; 
-        // ૧. ફ્રન્ટએન્ડથી આવતા નામો બરાબર અહીં લખો
-        const { total_amount, cartItems, shippingAddress,fullName } = req.body; 
+        // ફ્રન્ટએન્ડથી આવતા ડેટાનું સ્ટ્રક્ચર
+        const { total_amount, cartItems, shippingAddress, fullName } = req.body; 
+
+        if (!total_amount || !cartItems) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
 
         const newOrder = new orderSchema({
             user_id: userId,
-            total_amount: total_amount, // ખાતરી કરો કે અહીં 'total_amount' જ છે
+            total_amount: total_amount,
             shippingAddress: shippingAddress, 
             customer_name: fullName,
             order_status: "Pending"
