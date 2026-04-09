@@ -6,6 +6,8 @@ const secret = "secret"
 const productSchema = require("../models/ProductModel")
 const orderSchema = require("../models/OrderModel")
 const orderItemSchema = require("../models/OrderItemModel")
+const cloudinaryUtil = require("../utils/CloudinaryUtil")
+
 
 //registrations...
 const registerUser = async(req,res)=>{
@@ -286,6 +288,38 @@ const getUserProfile = async (req, res) => {
     }
 };
 
+
+
+
+// Sample Backend logic
+
+
+const updateProfile = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { firstName, lastName, email } = req.body;
+        
+        let updateData = { firstName, lastName, email };
+
+        if (req.file) {
+            // અહીં 'uploadToCloudinary' ને ફાઈલનું બફર મોકલી રહ્યા છીએ
+            const result = await cloudinaryUtil(req.file.buffer);
+            updateData.profilePic = result.secure_url; 
+        }
+
+        const updatedUser = await userSchema.findByIdAndUpdate(
+            userId,
+            { $set: updateData },
+            { new: true }
+        ).select("-password");
+
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        console.error("Update Profile Error:", error);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+};
+
 module.exports = {
     registerUser,
     getAllUser,
@@ -297,5 +331,6 @@ module.exports = {
     forgotPassword,
     getAllSalesForAdmin,
     resetPassword,
-    getUserProfile
+    getUserProfile,
+    updateProfile
 }
