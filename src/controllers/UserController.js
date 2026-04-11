@@ -168,9 +168,36 @@ const forgotPassword = async(req,res)=>{
     if(foundUserFromEmail){
         const token = jwt.sign(foundUserFromEmail.toObject(),secret,{expiresIn:60*24*7})
         const url = `http://localhost:5173/ResetPassword/${token}`
-         const mailtext = `<html>
-            <a href ='${url}'>RESET PASSWORD</a>
-        </html>`
+      const mailtext = `
+            <div style="background-color: #f9f9f9; padding: 50px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                    <div style="background-color: #FF3F6C; padding: 30px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Password Reset</h1>
+                    </div>
+                    
+                    <div style="padding: 40px; text-align: center;">
+                        <p style="font-size: 18px; color: #333333; margin-bottom: 25px;">Hello,</p>
+                        <p style="font-size: 16px; color: #666666; line-height: 1.6; margin-bottom: 30px;">
+                            We received a request to reset your password. No changes have been made to your account yet. 
+                            Click the button below to choose a new password:
+                        </p>
+                        
+                        <a href="${url}" style="background-color: #FF3F6C; color: #ffffff; padding: 15px 30px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block; font-size: 16px; transition: background-color 0.3s;">
+                            Reset Password
+                        </a>
+                        
+                        <p style="font-size: 14px; color: #999999; margin-top: 40px; line-height: 1.5;">
+                            If you didn't request this, you can safely ignore this email. <br>
+                            This link will expire soon for security reasons.
+                        </p>
+                    </div>
+                    
+                    <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 12px; color: #999999;">
+                        © 2026 Your Brand Name. All rights reserved.
+                    </div>
+                </div>
+            </div>
+            `;
         await mailSend(foundUserFromEmail.email,"Reset Password Link",mailtext)
         res.status(200).json({
             message:'reset password link sent to your email'
