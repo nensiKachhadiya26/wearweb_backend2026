@@ -3,43 +3,25 @@ const uploadToCloudinary = require("../utils/CloudinaryUtil")
 
 
 
-const createProduct = async(req, res) => {
+const createProduct = async (req, res) => {
     try {
-        
-        if (!req.user) {
-            return res.status(401).json({ message: "Login required to create product" });
-        }
+        if (!req.file) return res.status(400).json({ err: "Empty file" });
 
-        const file = req.file; 
-        if (!file) {
-            return res.status(400).json({ message: "Image is required" });
-        }
+        // Cloudinary પર અપલોડ
+        const cloudinaryResponse = await uploadToCloudinary(req.file.buffer);
 
-       
-        const cloudinaryResponse = await uploadToCloudinary(file.path);
-        
-        
-       const savedProduct = await productSchema.create({
+        const savedProduct = await productSchema.create({
             ...req.body,
-            sellerId: req.user._id, 
-            image: cloudinaryResponse.secure_url,
-            status: "pending" 
+            sellerId: req.user._id,
+            image: [cloudinaryResponse.secure_url], // આ URL લાઈવમાં કામ કરશે
+            status: "pending"
         });
 
-        res.status(201).json({
-            message: "product create successfully..",
-            data: savedProduct
-        });
-
-    } catch(err) {
-        console.log("Error details:", err);
-        res.status(500).json({
-            message: "error while creating product",
-            err: err.message 
-        });
+        res.status(201).json({ message: "Success", data: savedProduct });
+    } catch (err) {
+        res.status(500).json({ err: err.message });
     }
-}
-
+};
 const getAllProduct = async(req,res)=>{
     try{
         const allProduct = await productSchema.find({ status: "approved" })
@@ -101,8 +83,8 @@ const updateProduct = async (req, res) => {
 
         // 4. જો નવી ઈમેજ અપલોડ કરી હોય, તો તેને Cloudinary પર મોકલો
         if (req.file) {
-            const cloudinaryResponse = await uploadToCloudinary(req.file.path);
-            updateData.image = cloudinaryResponse.secure_url; // Cloudinary URL સેવ કરો
+            const cloudinaryResponse = await uploadToCloudinary(req.file.buffer);
+            updateData.image = [cloudinaryResponse.secure_url]; // Cloudinary URL સેવ કરો
         }
 
         // 5. ડેટાબેઝ અપડેટ કરો

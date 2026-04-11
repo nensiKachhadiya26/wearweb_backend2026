@@ -47,7 +47,7 @@ const getProductReviews = async (req, res) => {
     try {
         const { id } = req.params; // URL માંથી પ્રોડક્ટ ID લેશે
         const reviews = await reviewSchema.find({ productId: id })
-            .populate('userId', 'fullName')
+            .populate('userId', 'firstName lastName')
             .sort({ createdAt: -1 });
         res.status(200).json({ data: reviews });
     } catch (error) {

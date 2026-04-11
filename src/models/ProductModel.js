@@ -36,22 +36,20 @@ const productSchema = new mongoose.Schema({
         required:true
     },
 
-    image:[
-        {
-            type:String,
-        }
-    ],
+      image: {
+                type: [String], // સીધો String નો એરે
+                required: true
+            },
+     sizes: {
+                type: [String] // સીધો String નો એરે
+            },
 
     // stock:{
     //     type:Number,
     //     default:0
     // },
 
-   sizes: [
-        {
-            type: String 
-        }
-    ],
+   
 
     // color:{
     //     type:String,

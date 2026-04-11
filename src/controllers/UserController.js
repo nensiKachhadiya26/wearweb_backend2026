@@ -6,7 +6,7 @@ const secret = "secret"
 const productSchema = require("../models/ProductModel")
 const orderSchema = require("../models/OrderModel")
 const orderItemSchema = require("../models/OrderItemModel")
-const cloudinaryUtil = require("../utils/CloudinaryUtil")
+const CloudinaryUtil = require("../utils/CloudinaryUtil")
 
 
 //registrations...
@@ -323,27 +323,36 @@ const getUserProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
     try {
-        const userId = req.user._id;
         const { firstName, lastName, email } = req.body;
-        
-        let updateData = { firstName, lastName, email };
+        let imageUrl = "";
 
         if (req.file) {
-            // અહીં 'uploadToCloudinary' ને ફાઈલનું બફર મોકલી રહ્યા છીએ
-            const result = await cloudinaryUtil(req.file.buffer);
-            updateData.profilePic = result.secure_url; 
+            try {
+                // અહીં સુધારો: તમે ઉપર ઈમ્પોર્ટ 'CloudinaryUtil' નામથી કર્યું છે
+                // એટલે અહીં પણ CloudinaryUtil જ લખવું પડશે.
+                const result = await CloudinaryUtil(req.file.buffer); 
+                imageUrl = result.secure_url;
+            } catch (uploadErr) {
+                console.error("Cloudinary Upload Error:", uploadErr);
+                return res.status(500).json({ message: "Image upload failed" });
+            }
         }
 
+        const updateData = { firstName, lastName, email };
+        if (imageUrl) updateData.profilePic = imageUrl;
+
+        // ૨. અહીં પણ એક ભૂલ છે: 'User' ને બદલે 'userSchema' લખો
+        // કારણ કે તમે ઉપર 'const userSchema = require("../models/UserModel")' લખ્યું છે.
         const updatedUser = await userSchema.findByIdAndUpdate(
-            userId,
-            { $set: updateData },
+            req.user._id, 
+            updateData, 
             { new: true }
-        ).select("-password");
+        );
 
         res.status(200).json(updatedUser);
     } catch (error) {
         console.error("Update Profile Error:", error);
-        res.status(500).json({ message: "Internal Server Error", error: error.message });
+        res.status(500).json({ message: "Internal Server Error" });
     }
 };
 
