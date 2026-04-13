@@ -7,13 +7,13 @@ const createProduct = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ err: "Empty file" });
 
-        // Cloudinary પર અપલોડ
+       
         const cloudinaryResponse = await uploadToCloudinary(req.file.buffer);
 
         const savedProduct = await productSchema.create({
             ...req.body,
             sellerId: req.user._id,
-            image: [cloudinaryResponse.secure_url], // આ URL લાઈવમાં કામ કરશે
+            image: [cloudinaryResponse.secure_url], 
             status: "pending"
         });
 
