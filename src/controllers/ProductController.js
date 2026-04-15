@@ -64,30 +64,26 @@ const updateProduct = async (req, res) => {
         const productId = req.params.id;
         const loggedInSellerId = req.user._id;
 
-        // 1. પ્રોડક્ટ શોધો
         const product = await productSchema.findById(productId);
 
         if (!product) {
             return res.status(404).json({ message: "Product not found" });
         }
 
-        // 2. માલિકી ચેક કરો
+        
         if (product.sellerId.toString() !== loggedInSellerId.toString()) {
             return res.status(403).json({
                 message: "Unauthorized: You can only update your own products"
             });
         }
 
-        // 3. અપડેટ કરવા માટેનો ડેટા તૈયાર કરો
         let updateData = { ...req.body };
 
-        // 4. જો નવી ઈમેજ અપલોડ કરી હોય, તો તેને Cloudinary પર મોકલો
         if (req.file) {
             const cloudinaryResponse = await uploadToCloudinary(req.file.buffer);
-            updateData.image = [cloudinaryResponse.secure_url]; // Cloudinary URL સેવ કરો
+            updateData.image = [cloudinaryResponse.secure_url]; 
         }
 
-        // 5. ડેટાબેઝ અપડેટ કરો
         const updateObj = await productSchema.findByIdAndUpdate(
             productId, 
             updateData, 
@@ -147,10 +143,9 @@ const getPendingProducts = async (req, res) => {
     res.json({ success: true, data: products });
 };
 
-// 2. પ્રોડક્ટનું સ્ટેટસ બદલવા માટે (Approve/Reject)
 const updateProductStatus = async (req, res) => {
     const { id } = req.params;
-    const { status } = req.body; // status: 'approved' અથવા 'rejected'
+    const { status } = req.body; // status: 'approved' or 'rejected'
     await productSchema.findByIdAndUpdate(id, { status });
     res.json({ success: true, message: `Product ${status} successfully!` });
 };

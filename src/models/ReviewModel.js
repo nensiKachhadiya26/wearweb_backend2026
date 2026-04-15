@@ -8,7 +8,7 @@ const reviewSchema = new mongoose.Schema({
     },
     productId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'products', // તમારા Product મોડેલનું નામ
+        ref: 'products', 
         required: true
     },
     rating: {

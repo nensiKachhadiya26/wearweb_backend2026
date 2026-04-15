@@ -12,7 +12,6 @@ const CloudinaryUtil = require("../utils/CloudinaryUtil")
 //registrations...
 const registerUser = async(req,res)=>{
     try{
-        // const isApproved = role === "user" ? true : false;
         const hashedPassword =  await bcrypt.hash(req.body.password,10)
         const savedUser = await userSchema.create({...req.body,password:hashedPassword})
         
@@ -80,7 +79,7 @@ const updateUser = async(req,res)=>{
         })
     }  
 }
-//login....
+//Login....
 const loginUser = async(req,res)=>{
     try{
         const {email,password} = req.body
@@ -116,14 +115,11 @@ const loginUser = async(req,res)=>{
 
 const getDashboardStatus = async (req, res) => {
   try {
-    // 1. Counts melvo (Tame upar je variable name require karya che te j vapro)
     const totalUsers = await userSchema.countDocuments({role:"user"});
     const totalProducts = await productSchema.countDocuments();
     const totalOrders = await orderSchema.countDocuments();
 
-    // 2. Revenue calculate karo
-    // Tamari OrderModel ma field nu naam 'order_status' che ane enum ma 'Delivered' che.
-    // Amount mate field nu naam 'total_amount' che.
+   
     const orders = await orderSchema.find({ order_status: "Delivered" });
     
     const totalRevenue = orders.reduce((acc, curr) => {
@@ -226,7 +222,7 @@ const getAllSalesForAdmin = async (req, res) => {
                 populate: { 
                     path: 'sellerId', 
                     model: 'users', 
-                    // તમારા User Schema મુજબ આ ફિલ્ડ્સ હોવી જરૂરી છે
+             
                     select: 'firstName lastName' 
                 }
             });
@@ -238,10 +234,9 @@ const getAllSalesForAdmin = async (req, res) => {
                 const product = item.product_id;
                 const seller = product?.sellerId;
 
-                // સેલરનું નામ બનાવવાનું લોજિક
+                
                 let fullName = "Unknown Seller";
                 if (seller) {
-                    // જો firstName અને lastName હોય તો તેને જોડો
                     const fName = seller.firstName || "";
                     const lName = seller.lastName || "";
                     fullName = (fName || lName) ? `${fName} ${lName}`.trim() : "Name Not Set";
@@ -249,7 +244,6 @@ const getAllSalesForAdmin = async (req, res) => {
                     fullName = "Product Deleted";
                 }
 
-                // અમાઉન્ટ લોજિક
                 const unitPrice = Number(item.price || product?.price || 0);
                 const qty = Number(item.quantity) || 1;
 
@@ -283,7 +277,7 @@ const resetPassword = async(req,res)=>{
     const {newPassword,token} = req.body;
     try{
 
-        const decodedUser = await jwt.verify(token,secret) //{userobject}
+        const decodedUser = await jwt.verify(token,secret) 
         const hashedPassword =await  bcrypt.hash(newPassword,10)
         const updatedUser = await userSchema.findByIdAndUpdate(decodedUser._id,{password:hashedPassword})
         res.status(200).json({
@@ -301,10 +295,9 @@ const resetPassword = async(req,res)=>{
 
 }
 
-// લોગીન થયેલા યુઝરની પ્રોફાઇલ મેળવવા માટે
+
 const getUserProfile = async (req, res) => {
     try {
-        // req.user.id તમારા AuthMiddleware માંથી આવશે
         const user = await userSchema.findById(req.user._id).select("-password"); 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
@@ -318,7 +311,7 @@ const getUserProfile = async (req, res) => {
 
 
 
-// Sample Backend logic
+
 
 
 const updateProfile = async (req, res) => {
@@ -328,8 +321,7 @@ const updateProfile = async (req, res) => {
 
         if (req.file) {
             try {
-                // અહીં સુધારો: તમે ઉપર ઈમ્પોર્ટ 'CloudinaryUtil' નામથી કર્યું છે
-                // એટલે અહીં પણ CloudinaryUtil જ લખવું પડશે.
+                
                 const result = await CloudinaryUtil(req.file.buffer); 
                 imageUrl = result.secure_url;
             } catch (uploadErr) {
@@ -341,8 +333,7 @@ const updateProfile = async (req, res) => {
         const updateData = { firstName, lastName, email };
         if (imageUrl) updateData.profilePic = imageUrl;
 
-        // ૨. અહીં પણ એક ભૂલ છે: 'User' ને બદલે 'userSchema' લખો
-        // કારણ કે તમે ઉપર 'const userSchema = require("../models/UserModel")' લખ્યું છે.
+ 
         const updatedUser = await userSchema.findByIdAndUpdate(
             req.user._id, 
             updateData, 

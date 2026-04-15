@@ -5,7 +5,7 @@ const cartSchema = require("../models/CartModel")
 const createOrder = async (req, res) => {
     try {
         const userId = req.user._id; 
-        // ફ્રન્ટએન્ડથી આવતા ડેટાનું સ્ટ્રક્ચર
+       
         const { total_amount, cartItems, shippingAddress, fullName } = req.body; 
 
         if (!total_amount || !cartItems) {
@@ -36,7 +36,7 @@ const createOrder = async (req, res) => {
 
         res.status(201).json({ 
             message: "Order placed successfully! 🎉", 
-            data: savedOrder, // ફ્રન્ટએન્ડ આ 'data' કી શોધે છે
+            data: savedOrder, 
             orderItems: newOrderItems
         });
 
@@ -45,25 +45,23 @@ const createOrder = async (req, res) => {
     }
 };
 
-// સેલર ડેશબોર્ડ માટેના ઓર્ડર મેળવવા
+
 const getAllOrder = async (req, res) => {
     try {
-        const loggedInSellerId = req.user._id; // લૉગિન થયેલ સેલરની ID
+        const loggedInSellerId = req.user._id; 
 
-        // ૧. પેલા 'OrderItem' ટેબલમાંથી એવા ઓર્ડર આઈડી (order_id) શોધો 
-        // જેમાં પ્રોડક્ટનો sellerId લૉગિન થયેલ સેલર સાથે મેચ થતો હોય.
+      
         const relevantOrderItems = await orderItemSchema.find().populate({
             path: 'items.product_id',
-            match: { sellerId: loggedInSellerId }, // ફક્ત આ સેલરની પ્રોડક્ટ્સ જ ફિલ્ટર કરો
+            match: { sellerId: loggedInSellerId }, 
             select: 'sellerId'
         });
 
-        // ૨. જે ઓર્ડરમાં આ સેલરની એક પણ પ્રોડક્ટ મળી હોય, તેના ID એક એરેમાં ભેગા કરો
         const sellerOrderIds = relevantOrderItems
             .filter(orderItem => orderItem.items.some(item => item.product_id !== null))
             .map(orderItem => orderItem.order_id);
 
-        // ૩. હવે ફક્ત એ જ ઓર્ડર 'orderSchema' માંથી લાવો જે આ લિસ્ટમાં હોય
+     
         const allOrder = await orderSchema.find({
             _id: { $in: sellerOrderIds }
         }).sort({ createdAt: -1 });
@@ -82,7 +80,7 @@ const getMyOrder = async (req, res) => {
     try {
         const userId = req.user._id; 
         
-        // ભૂલ સુધારો: 'userId' ને બદલે 'user_id' વાપરો (જે મોડેલમાં છે)
+       
         const orders = await orderSchema.find({ user_id: userId }).sort({ createdAt: -1 });
         
         res.status(200).json({
@@ -93,11 +91,11 @@ const getMyOrder = async (req, res) => {
     }
 };
 
-// ... બાકીના ફંક્શન્સ (cancelOrder, deleteOrder) માં પણ 'user_id' વાપરવું
+
 const cancelOrder = async (req, res) => {
     try {
         const orderId = req.params.id;
-        // અહીં પણ user_id કરો
+       
         const order = await orderSchema.findOne({ _id: orderId, user_id: req.user._id });
 
         if (!order) {
@@ -182,27 +180,25 @@ const getRecentPendingOrders = async (req, res) => {
     try {
         const sellerId = req.user._id;
 
-        // ૧. પેલા એવા ઓર્ડર શોધો જેનું સ્ટેટસ "Pending" હોય
+      
         const pendingOrders = await orderSchema.find({ 
             order_status: "Pending" 
         }).select("_id");
 
         const pendingOrderIds = pendingOrders.map(o => o._id);
 
-        // ૨. હવે 'orderItemSchema' માં તપાસો કે આ Pending ઓર્ડરમાં આ સેલરની કઈ પ્રોડક્ટ છે
         const pendingItems = await orderItemSchema.find({
             order_id: { $in: pendingOrderIds }
         }).populate({
             path: 'items.product_id',
-            match: { sellerId: sellerId }, // ફક્ત આ સેલરની પ્રોડક્ટ
+            match: { sellerId: sellerId },
             select: 'name'
         }).populate('order_id');
 
-        // ૩. ડેટાને ફોર્મેટ કરો (બીજા સેલરની પ્રોડક્ટ ફિલ્ટર કરીને)
         const result = [];
         pendingItems.forEach(group => {
             group.items.forEach(item => {
-                if (item.product_id) { // જો મેચ થાય તો જ
+                if (item.product_id) { 
                     result.push({
                         order_id: group.order_id._id,
                         price: item.price,
@@ -215,7 +211,7 @@ const getRecentPendingOrders = async (req, res) => {
             });
         });
 
-        // છેલ્લા ઓર્ડર પહેલા બતાવવા માટે શોર્ટિંગ
+        
         const finalData = result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
 
         res.status(200).json({ success: true, data: finalData });

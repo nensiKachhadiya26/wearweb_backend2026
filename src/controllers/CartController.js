@@ -4,26 +4,23 @@ const cartSchema = require("../models/CartModel")
 
 const createCart = async (req, res) => {
     try {
-        // validateToken માંથી આપણને req.user._id મળશે
+       
         const userId = req.user._id; 
         const { product_id, quantity } = req.body;
 
-        // ૧. ચેક કરો કે આ યુઝરનું કાર્ટ પહેલેથી છે કે નહીં
         let cart = await cartSchema.findOne({ user_id: userId });
 
         if (cart) {
-            // ૨. જો કાર્ટ હોય, તો ચેક કરો કે આ પ્રોડક્ટ અંદર છે?
                 const itemIndex = cart.items.findIndex(item => 
                 String(item.product_id).trim() === String(product_id).trim() ); 
            if (itemIndex > -1) {
                 cart.items[itemIndex].quantity = Number(quantity) || 1; 
             } else {
-                // જો પ્રોડક્ટ ના હોય, તો નવી એડ કરો
                 cart.items.push({ product_id, quantity: quantity || 1 });
             }
             await cart.save();
         } else {
-            // ૩. જો કાર્ટ જ ના હોય, તો નવું કાર્ટ બનાવો
+          
             cart = await cartSchema.create({
                 user_id: userId,
                 items: [{ product_id, quantity: quantity || 1 }]
@@ -38,10 +35,10 @@ const createCart = async (req, res) => {
 
 const getAllCart = async (req, res) => {
     try {
-        // ૧. ચેક કરો કે ટોકનમાંથી યુઝર આઈડી મળે છે કે નહીં
+     
         const userId = req.user._id;
 
-        // ૨. તે યુઝરનું કાર્ટ શોધો અને પ્રોડક્ટની વિગતો 'populate' કરો
+     
         const allCart = await cartSchema.find({ user_id: userId })
             .populate("items.product_id"); 
 
@@ -92,23 +89,22 @@ const updateCart = async(req,res)=>{
 
 const deleteCart = async (req, res) => {
     try {
-        const userId = req.user._id; // Token માંથી મળેલી ID
-        const productId = req.params.id; // Route માંથી મળેલી ID (:id)
+        const userId = req.user._id; 
+        const productId = req.params.id; 
 
-        // ૧. યુઝરનું કાર્ટ શોધો
+     
         let cart = await cartSchema.findOne({ user_id: userId });
 
         if (!cart) {
             return res.status(404).json({ message: "Cart not found" });
         }
 
-        // ૨. તે પ્રોડક્ટને લિસ્ટમાંથી કાઢી નાખો
-        // ખાસ ધ્યાન રાખજો: item.product_id ને .toString() કરવું જરૂરી છે
+      
         const updatedItems = cart.items.filter(
             (item) => item.product_id.toString() !== productId
         );
 
-        // ૩. અપડેટ કરેલું લિસ્ટ ફરીથી સેવ કરો
+       
         cart.items = updatedItems;
         await cart.save();
 
@@ -128,7 +124,7 @@ const deleteCart = async (req, res) => {
 const clearCartAfterOrder = async (req, res) => {
     try {
         const userId = req.user._id;
-        // આ યુઝરનું આખું કાર્ટ ડોક્યુમેન્ટ જ ડીલીટ કરી નાખશે
+       
         await cartSchema.findOneAndDelete({ user_id: userId });
         
         res.status(200).json({ message: "Cart cleared successfully" });

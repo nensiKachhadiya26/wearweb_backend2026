@@ -51,32 +51,18 @@ const productSchema = new mongoose.Schema({
 
    
 
-    // color:{
-    //     type:String,
-    //     default:"Black",
-    //     enum:["Red","Blue","Green","Yellow","Black"]
-    // },
+   
 
    status: { 
         type: String, 
         enum: ['pending', 'approved', 'rejected'], 
         default: 'pending' 
     },
-    // reviews: [
-    //     {
-    //         userId: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
-    //         userName: String,
-    //         rating: { type: Number, required: true },
-    //         comment: String,
-    //         createdAt: { type: Date, default: Date.now }
-    //     }
-    // ],
-    //averageRating: { type: Number, default: 0 }
-
-    // created_at:{
-    //     type:Date,
-    //     default:Date.now
-    // }
+    
+    created_at:{
+        type:Date,
+        default:Date.now
+    }
 
 } ,{ timestamps: true })
 
